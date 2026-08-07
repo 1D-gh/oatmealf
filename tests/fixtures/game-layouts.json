@@ -1,0 +1,76 @@
+{
+  "format": "oatmealf-layouts",
+  "version": 1,
+  "capturedAt": "2026-07-13T00:00:00-04:00",
+  "process": {
+    "name": "FixtureGame",
+    "id": 1
+  },
+  "layouts": [
+    {
+      "name": "Test",
+      "typeName": "FTestParameters",
+      "layoutName": "FTestParameters",
+      "rootDefinitionId": 1,
+      "metadataHash": "0xF848E03A",
+      "rhiHash": "0xCF869FDC",
+      "constantBufferSize": 32,
+      "renderTargetsOffset": 65535,
+      "staticSlot": 255,
+      "bindingFlags": 1,
+      "flags": 0,
+      "resourceTables": {
+        "Resources": [],
+        "GraphResources": [],
+        "GraphTextures": [],
+        "GraphBuffers": [],
+        "GraphUniformBuffers": [],
+        "UniformBuffers": []
+      }
+    }
+  ],
+  "definitions": [
+    {
+      "id": 1,
+      "typeName": "FTestParameters",
+      "layoutName": "FTestParameters",
+      "shaderVariableName": "Test",
+      "sourceFile": "C:/Build/Engine/Source/Runtime/Test/TestShaderParameters.h",
+      "sourceLine": 1,
+      "size": 32,
+      "useCase": 0,
+      "bindingFlags": 1,
+      "usageFlags": 0,
+      "members": [
+        {
+          "index": 0,
+          "name": "Existing",
+          "offset": 0,
+          "type": "FLOAT32",
+          "rows": 1,
+          "columns": 1,
+          "elements": 0,
+          "precision": 0,
+          "shaderType": "",
+          "structType": "",
+          "sourceLine": 2,
+          "nestedDefinitionId": 0
+        },
+        {
+          "index": 1,
+          "name": "RealValue",
+          "offset": 16,
+          "type": "FLOAT32",
+          "rows": 1,
+          "columns": 4,
+          "elements": 0,
+          "precision": 0,
+          "shaderType": "",
+          "structType": "",
+          "sourceLine": 3,
+          "nestedDefinitionId": 0
+        }
+      ]
+    }
+  ]
+}
