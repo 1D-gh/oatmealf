@@ -126,6 +126,10 @@ cargo test
 130 interrupted with Ctrl+C
 ```
 
+## Manual Workflow
+
+This tool was made to automate the process documented in [Manually Recovering Subnautica 2 Shader Layouts](docs/subnautica2-manual-workflow.md).
+
 ## License
 
 Licensed under the MIT License.
