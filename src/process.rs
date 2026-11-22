@@ -83,11 +83,11 @@ mod platform {
         }
     }
 
-    pub struct ProcessMemory {
+    pub struct LiveMemory {
         handle: OwnedHandle,
     }
 
-    impl ProcessMemory {
+    impl LiveMemory {
         pub fn open(process_id: u32) -> Result<Self> {
             let handle =
                 unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, process_id) };
@@ -109,7 +109,7 @@ mod platform {
             self.read_into(address, &mut buffer).then_some(buffer)
         }
 
-        fn read_array<const N: usize>(&self, address: u64) -> Option<[u8; N]> {
+        pub fn read_array<const N: usize>(&self, address: u64) -> Option<[u8; N]> {
             let mut buffer = [0u8; N];
             self.read_into(address, &mut buffer).then_some(buffer)
         }
@@ -305,13 +305,13 @@ mod platform {
 }
 
 #[cfg(windows)]
-pub use platform::{ProcessMemory, find_exactly_one, find_shipping_game};
+pub use platform::{LiveMemory, find_exactly_one, find_shipping_game};
 
 #[cfg(not(windows))]
-pub struct ProcessMemory;
+pub struct LiveMemory;
 
 #[cfg(not(windows))]
-impl ProcessMemory {
+impl LiveMemory {
     pub fn open(_process_id: u32) -> Result<Self> {
         anyhow::bail!("live shader capture is only supported on 64-bit Windows")
     }
@@ -341,4 +341,42 @@ pub fn find_exactly_one(_executable_name: &str, _label: &str) -> Result<ProcessI
 #[cfg(not(windows))]
 pub fn find_shipping_game(_requested_name: Option<&str>) -> Result<ProcessInfo> {
     anyhow::bail!("live shader capture is only supported on 64-bit Windows")
+}
+
+/// Memory source for the capture code: a live process or a Windows minidump.
+pub enum ProcessMemory {
+    Live(LiveMemory),
+    Dump(crate::minidump::DumpMemory),
+}
+
+impl ProcessMemory {
+    pub fn open(process_id: u32) -> Result<Self> {
+        Ok(Self::Live(LiveMemory::open(process_id)?))
+    }
+
+    pub fn read_bytes(&self, address: u64, size: usize) -> Option<Vec<u8>> {
+        match self {
+            Self::Live(memory) => memory.read_bytes(address, size),
+            Self::Dump(memory) => memory.read_bytes(address, size),
+        }
+    }
+
+    pub fn read_pointer(&self, address: u64) -> Option<u64> {
+        let bytes = self.read_bytes(address, 8)?;
+        Some(u64::from_le_bytes(bytes.try_into().ok()?))
+    }
+
+    pub fn read_u32(&self, address: u64) -> Result<u32> {
+        let bytes = self
+            .read_bytes(address, 4)
+            .with_context(|| format!("could not read uint32 at 0x{address:X}"))?;
+        Ok(u32::from_le_bytes(bytes.try_into().unwrap()))
+    }
+
+    pub fn readable_regions(&self) -> Vec<MemoryRegion> {
+        match self {
+            Self::Live(memory) => memory.readable_regions(),
+            Self::Dump(memory) => memory.regions(),
+        }
+    }
 }

@@ -8,3 +8,4 @@ pub mod planner;
 pub mod process;
 pub mod progress;
 pub mod simulate;
+pub mod minidump;

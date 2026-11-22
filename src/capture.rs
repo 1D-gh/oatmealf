@@ -98,6 +98,57 @@ pub fn run_with_verbosity(
         bail!("run oatmealf as a 64-bit process");
     }
     let memory = ProcessMemory::open(process.pid)?;
+    if verbose {
+        println!("Attached {} ({})", process.process_name(), process.pid);
+    }
+    run_with_memory(memory, &process.process_name(), process.pid, output_path, verbose)
+}
+
+/// Capture the uniform-buffer registry from a Windows minidump instead of a live process.
+pub fn run_from_dump(dump_path: &Path, output_path: &Path, verbose: bool) -> Result<usize> {
+    let dump = crate::minidump::DumpMemory::open(dump_path)?;
+    let name = dump
+        .main_module()
+        .map(|module| {
+            Path::new(&module.name.replace('\\', "/"))
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .unwrap_or_else(|| "minidump".to_string());
+    if verbose {
+        println!(
+            "Opened minidump {}: {} regions, {:.2} GiB, {} modules",
+            dump_path.display(),
+            dump.region_count(),
+            dump.total_memory() as f64 / (1u64 << 30) as f64,
+            dump.modules.len()
+        );
+        if let Some(module) = dump.main_module() {
+            println!(
+                "Main module {} base 0x{:X} size 0x{:X} file version {}.{}.{}.{}",
+                module.name,
+                module.base,
+                module.size,
+                module.file_version.0,
+                module.file_version.1,
+                module.file_version.2,
+                module.file_version.3
+            );
+        }
+    }
+    let process_id = dump.process_id.max(1);
+    run_with_memory(ProcessMemory::Dump(dump), &name, process_id, output_path, verbose)
+}
+
+fn run_with_memory(
+    memory: ProcessMemory,
+    process_name: &str,
+    process_id: u32,
+    output_path: &Path,
+    verbose: bool,
+) -> Result<usize> {
     let mut capturer = Capturer {
         regions: memory.readable_regions(),
         memory,
@@ -106,9 +157,6 @@ pub fn run_with_verbosity(
         definitions: HashMap::new(),
         definition_order: Vec::new(),
     };
-    if verbose {
-        println!("Attached {} ({})", process.process_name(), process.pid);
-    }
     let anchor_metadata = capturer.find_anchor_metadata();
     cancel::check()?;
     if anchor_metadata == 0 {
@@ -153,8 +201,8 @@ pub fn run_with_verbosity(
     };
     dump::write(
         output_path,
-        &process.process_name(),
-        process.pid,
+        process_name,
+        process_id,
         &captured_at,
         &capture,
     )?;
