@@ -1,6 +1,8 @@
 # oatmealf
 
-Compare shader parameter layouts from a running UE 5.6 game and editor, then generate source copies for layouts that differ.
+Compare shader parameter layouts from a running UE 5.6 or UE 5.7.4 game and editor, then generate source copies for layouts that differ.
+
+UE 5.7.4 support, game capture from a minidump and the `uniform_layouts` program: [README-5.7.md](README-5.7.md).
 
 The tool reads both processes without modifying them and checks the full uniform buffer registry. Generated files are written to a separate output directory. The original engine source is never changed.
 
@@ -42,6 +44,10 @@ Output: C:\path\to\Generated\20260717-203000-a1b2c3
 | `--engine-root <PATH>` | Use a specific Unreal Engine root, `Engine` directory or `Engine\Source` directory instead of locating it from the editor. |
 | `--game-layouts <FILE>` | Use a saved `game-layouts.json` capture instead of a running game. |
 | `--editor-layouts <FILE>` | Use a saved `editor-layouts.json` capture instead of a running editor. |
+| `--game-minidump <FILE>` | Read the game's layouts from a full-memory Windows minidump (`.DMP`) instead of a running game. |
+| `--save-game-layouts <FILE>` | Copy the game capture to this file (`game-layouts.json` format). |
+| `--save-editor-layouts <FILE>` | Copy the editor capture to this file (`editor-layouts.json` format). |
+| `--capture-only` | Stop after the captures are saved; no comparison and no source generation. |
 | `-o, --output <PATH>` | Select a specific output directory. The default is `Generated`. |
 | `--layout <NAME>` | Only check selected layouts. Repeat the option or separate names with commas. |
 | `-v, --verbose` | Show capture and verification details. |
@@ -100,7 +106,7 @@ Placeholder constant names do not affect shader binding. The tool can recover th
 
 ## Compatibility
 
-oatmealf is built for UE 5.6 and tested with Subnautica 2. Other UE 5.6 games may work but are untested. Other engine versions are not supported.
+oatmealf is built for UE 5.6 and tested with Subnautica 2. Other UE 5.6 games may work but are untested. UE 5.7.4 uses the same memory layout and is supported ([README-5.7.md](README-5.7.md)). Other engine versions are not supported.
 
 ## Build
 

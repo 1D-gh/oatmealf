@@ -1,5 +1,5 @@
-//! Writes the game uniform buffer layouts that differ from the editor as the data file read by the engine loader
-//! (RenderCore/Private/UniformBufferTranslationLoader.cpp). Format: docs/cooked-materials-shaders.md of the modkit workspace.
+//! Writes the game uniform buffer layouts that differ from the editor's as a text file, for an engine that translates its
+//! uniform buffers to the game's layouts at run time. Format: README-5.7.md ("uniform_layouts output format").
 //!
 //! usage: uniform_layouts <game-layouts.json> <editor-layouts.json> <out.txt>
 
@@ -164,8 +164,8 @@ fn export_layout(definitions: &HashMap<u64, &Value>, layout: &Value, editor_hash
     Ok(block)
 }
 
-/// Default for a resource member that has no editor counterpart, chosen to match what the game's own code
-/// stores in those members (SceneTextures.cpp, VolumeLighting.cpp, FogRendering.cpp, LightGridInjection.cpp in the game's engine source).
+/// Default for a resource member that has no editor counterpart, chosen to match what the renderer stores in those
+/// members (SceneTextures.cpp, VolumeLighting.cpp, FogRendering.cpp, LightGridInjection.cpp).
 fn default_key(leaf: &Leaf) -> &'static str {
     let member = leaf.path.rsplit('.').next().unwrap_or(&leaf.path);
     match leaf.ty.as_str() {
