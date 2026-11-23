@@ -59,6 +59,19 @@ end
 - `list`: the members of one RHI layout array in the game's order: `R` Resources, `G` GraphResources, `T` GraphTextures, `B` GraphBuffers, `U` GraphUniformBuffers, `N` UniformBuffers.
 - `Path`: the flattened member name of the editor metadata: `Name`, `Parent.Name` for a nested or included struct member, `Name[i]` for a resource array element, `Name[i].Child` for a member of a struct array element.
 
+After the layout records, the file has a block of `add` records (preceded by the comment `# add records: members of game structs that the editor structs lack`), one per member that a game struct has and the editor struct of the same type lacks:
+
+```text
+add <StructTypeName> <AfterMember|-> <Name> <BaseType> <Rows> <Columns> <Elements> <HlslType>
+```
+
+- `StructTypeName` is the type name of the struct that directly owns the member (the top-level uniform buffer struct or a nested struct type). A struct type that appears in several layouts has its records once.
+- `AfterMember` is the game member the new member follows in that struct's declaration order (it may itself be an added member); `-` for the first member. The records of one struct are in game declaration order.
+- `BaseType` is `UBMT_` followed by the `Type` of a leaf. `Rows`, `Columns` and `Elements` (0 = not an array) are the game's values.
+- `HlslType` is the shader type of a resource with whitespace removed (`Texture2D<uint2>`, `StructuredBuffer<float4>`, `SamplerState`), or the HLSL type of a constant from its rows and columns (`float`, `float3`, `float4x4`, `uint`, `int2`).
+
+The generator stops with an error when a struct type has different added members in different places, when an added member is a struct, or when a member has a non-default precision.
+
 ## Notes
 
 - A full-memory dump contains the whole main module (`<Game>-Win64-Shipping.exe`); its strings and pointers are not rebased, so the anchor scan works as on a live process.
