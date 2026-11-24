@@ -2,6 +2,7 @@ pub mod cancel;
 pub mod capture;
 pub mod dump;
 pub mod hash;
+pub mod minidump;
 pub mod model;
 pub mod output;
 pub mod planner;

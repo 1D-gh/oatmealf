@@ -1,3 +1,17 @@
+# Unreleased
+
+- UE 5.7.4 is supported. The offsets oatmealf reads are unchanged from 5.6; editor builds
+  place `FileName` at a different offset than shipping builds, and the capture checks both.
+- `--game-minidump <FILE>` reads the game's layouts from a full-memory Windows minidump
+  instead of a running process. `ProcessMemory` is now an enum over live memory and a
+  dump; the live-process type is `LiveMemory`.
+- `--save-game-layouts <FILE>` and `--save-editor-layouts <FILE>` write the captures in
+  the `*-layouts.json` format; `--capture-only` stops after saving them.
+- New program `uniform_layouts` writes the game layouts that differ from the editor's as
+  a text file, for tools that load the game's layouts into an engine at run time. The
+  format is documented in `docs/ue-5.7.md`.
+- An ignored integration test captures a real minidump named by `OATMEALF_TEST_MINIDUMP`.
+
 # oatmealf 0.1.13
 
 - Layouts that were not loaded in the editor are reported separately instead of being

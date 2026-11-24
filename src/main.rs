@@ -20,8 +20,24 @@ use std::time::{SystemTime, UNIX_EPOCH};
 )]
 struct Cli {
     /// Game process name. Autodetected when one *-Win64-Shipping.exe is running.
-    #[arg(long, value_name = "PROCESS", conflicts_with = "game_layouts")]
+    #[arg(long, value_name = "PROCESS", conflicts_with_all = ["game_layouts", "game_minidump"])]
     game: Option<String>,
+
+    /// Read the game's layouts from a full-memory Windows minidump (.DMP) instead of a live process.
+    #[arg(long, value_name = "FILE", conflicts_with = "game_layouts")]
+    game_minidump: Option<PathBuf>,
+
+    /// Copy the game capture to this file (game-layouts.json format).
+    #[arg(long, value_name = "FILE")]
+    save_game_layouts: Option<PathBuf>,
+
+    /// Copy the editor capture to this file (editor-layouts.json format).
+    #[arg(long, value_name = "FILE")]
+    save_editor_layouts: Option<PathBuf>,
+
+    /// Stop after the captures were saved; skip comparison and source generation.
+    #[arg(long)]
+    capture_only: bool,
 
     /// Editor process name.
     #[arg(
@@ -100,7 +116,10 @@ fn run(cli: Cli, bare_invocation: bool) -> Result<u8> {
         .unwrap_or_else(default_output_parent);
 
     // show help after discovery errors from a bare double-click
-    let game_process = if cli.game_layouts.is_none() {
+    let game_process = if cli.game_layouts.is_none()
+        && cli.game_minidump.is_none()
+        && !(cli.capture_only && cli.game.is_none())
+    {
         match find_shipping_game(cli.game.as_deref()) {
             Ok(process) => Some(process),
             Err(error) if bare_invocation => return fail_with_help(&error),
@@ -109,7 +128,9 @@ fn run(cli: Cli, bare_invocation: bool) -> Result<u8> {
     } else {
         None
     };
-    let editor_process = if cli.editor_layouts.is_none() {
+    let editor_process = if cli.editor_layouts.is_none()
+        && !(cli.capture_only && cli.save_editor_layouts.is_none())
+    {
         match find_exactly_one(&cli.editor, "editor") {
             Ok(process) => Some(process),
             Err(error) if bare_invocation => return fail_with_help(&error),
@@ -119,13 +140,17 @@ fn run(cli: Cli, bare_invocation: bool) -> Result<u8> {
         None
     };
 
-    let engine_root = match locate_engine_root(
-        cli.engine_root.as_deref(),
-        editor_process.as_ref(),
-        cli.verbose > 0,
-    ) {
-        Some(root) => root,
-        None => return Ok(0),
+    let engine_root = if cli.capture_only && cli.engine_root.is_none() {
+        PathBuf::new()
+    } else {
+        match locate_engine_root(
+            cli.engine_root.as_deref(),
+            editor_process.as_ref(),
+            cli.verbose > 0,
+        ) {
+            Some(root) => root,
+            None => return Ok(0),
+        }
     };
     let output_directory = new_output_directory(&output_parent)?;
 
@@ -139,24 +164,51 @@ fn run(cli: Cli, bare_invocation: bool) -> Result<u8> {
         println!("Engine source: {}", engine_root.display());
     }
 
-    let needs_capture = game_process.is_some() || editor_process.is_some();
+    let needs_capture =
+        game_process.is_some() || editor_process.is_some() || cli.game_minidump.is_some();
     let capture_directory = needs_capture.then(TemporaryCapture::new).transpose()?;
-    let game_layouts_path = resolve_or_capture(
-        cli.game_layouts.as_deref(),
-        game_process.as_ref(),
-        capture_directory.as_ref(),
-        "game-layouts.json",
-        cli.verbose > 0,
-    )?;
+    let game_layouts_path = if let Some(dump) = cli.game_minidump.as_deref() {
+        let directory = capture_directory
+            .as_ref()
+            .context("internal error: capture directory was not created")?;
+        let path = directory.path.join("game-layouts.json");
+        progress::step(&format!("Reading minidump {}...", dump.display()));
+        capture::run_from_dump(dump, &path, cli.verbose > 0)?;
+        path
+    } else if cli.capture_only && cli.game_layouts.is_none() && game_process.is_none() {
+        PathBuf::new()
+    } else {
+        resolve_or_capture(
+            cli.game_layouts.as_deref(),
+            game_process.as_ref(),
+            capture_directory.as_ref(),
+            "game-layouts.json",
+            cli.verbose > 0,
+        )?
+    };
+    if !game_layouts_path.as_os_str().is_empty() {
+        save_copy(&game_layouts_path, cli.save_game_layouts.as_deref())?;
+    }
     cancel::check()?;
-    let editor_layouts_path = resolve_or_capture(
-        cli.editor_layouts.as_deref(),
-        editor_process.as_ref(),
-        capture_directory.as_ref(),
-        "editor-layouts.json",
-        cli.verbose > 0,
-    )?;
+    let editor_layouts_path =
+        if cli.capture_only && cli.editor_layouts.is_none() && editor_process.is_none() {
+            PathBuf::new()
+        } else {
+            resolve_or_capture(
+                cli.editor_layouts.as_deref(),
+                editor_process.as_ref(),
+                capture_directory.as_ref(),
+                "editor-layouts.json",
+                cli.verbose > 0,
+            )?
+        };
+    if !editor_layouts_path.as_os_str().is_empty() {
+        save_copy(&editor_layouts_path, cli.save_editor_layouts.as_deref())?;
+    }
     cancel::check()?;
+    if cli.capture_only {
+        return Ok(0);
+    }
 
     output::generate(
         &game_layouts_path,
@@ -168,6 +220,16 @@ fn run(cli: Cli, bare_invocation: bool) -> Result<u8> {
     )?;
     cancel::check()?;
     Ok(0)
+}
+
+fn save_copy(from: &Path, to: Option<&Path>) -> Result<()> {
+    if let Some(to) = to {
+        if let Some(parent) = to.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+            fs::create_dir_all(parent)?;
+        }
+        fs::copy(from, to).with_context(|| format!("could not write {}", to.display()))?;
+    }
+    Ok(())
 }
 
 fn fail_with_help(error: &anyhow::Error) -> Result<u8> {
