@@ -190,20 +190,18 @@ fn run(cli: Cli, bare_invocation: bool) -> Result<u8> {
         save_copy(&game_layouts_path, cli.save_game_layouts.as_deref())?;
     }
     cancel::check()?;
-    let editor_layouts_path = if cli.capture_only
-        && cli.editor_layouts.is_none()
-        && editor_process.is_none()
-    {
-        PathBuf::new()
-    } else {
-        resolve_or_capture(
-            cli.editor_layouts.as_deref(),
-            editor_process.as_ref(),
-            capture_directory.as_ref(),
-            "editor-layouts.json",
-            cli.verbose > 0,
-        )?
-    };
+    let editor_layouts_path =
+        if cli.capture_only && cli.editor_layouts.is_none() && editor_process.is_none() {
+            PathBuf::new()
+        } else {
+            resolve_or_capture(
+                cli.editor_layouts.as_deref(),
+                editor_process.as_ref(),
+                capture_directory.as_ref(),
+                "editor-layouts.json",
+                cli.verbose > 0,
+            )?
+        };
     if !editor_layouts_path.as_os_str().is_empty() {
         save_copy(&editor_layouts_path, cli.save_editor_layouts.as_deref())?;
     }

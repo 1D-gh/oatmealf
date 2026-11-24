@@ -136,9 +136,8 @@ impl DumpMemory {
                     .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
                     .collect();
                 // VS_FIXEDFILEINFO starts at +24: sig, struct ver, FileVerMS, FileVerLS, ProdVerMS, ProdVerLS
-                let ver = |ms: u32, ls: u32| {
-                    ((ms >> 16) as u16, ms as u16, (ls >> 16) as u16, ls as u16)
-                };
+                let ver =
+                    |ms: u32, ls: u32| ((ms >> 16) as u16, ms as u16, (ls >> 16) as u16, ls as u16);
                 modules.push(DumpModule {
                     base: u64_at(entry, 0),
                     size: u32_at(entry, 8),
@@ -156,7 +155,11 @@ impl DumpMemory {
         let process_id = match misc_stream {
             Some((rva, size)) if size >= 12 => {
                 let raw = read_at(&file, rva, 12)?;
-                if u32_at(&raw, 4) & 1 != 0 { u32_at(&raw, 8) } else { 0 }
+                if u32_at(&raw, 4) & 1 != 0 {
+                    u32_at(&raw, 8)
+                } else {
+                    0
+                }
             }
             _ => 0,
         };

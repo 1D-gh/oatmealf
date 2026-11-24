@@ -101,7 +101,13 @@ pub fn run_with_verbosity(
     if verbose {
         println!("Attached {} ({})", process.process_name(), process.pid);
     }
-    run_with_memory(memory, &process.process_name(), process.pid, output_path, verbose)
+    run_with_memory(
+        memory,
+        &process.process_name(),
+        process.pid,
+        output_path,
+        verbose,
+    )
 }
 
 /// Capture the uniform-buffer registry from a Windows minidump instead of a live process.
@@ -139,7 +145,13 @@ pub fn run_from_dump(dump_path: &Path, output_path: &Path, verbose: bool) -> Res
         }
     }
     let process_id = dump.process_id.max(1);
-    run_with_memory(ProcessMemory::Dump(dump), &name, process_id, output_path, verbose)
+    run_with_memory(
+        ProcessMemory::Dump(dump),
+        &name,
+        process_id,
+        output_path,
+        verbose,
+    )
 }
 
 fn run_with_memory(
