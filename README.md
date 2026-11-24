@@ -2,7 +2,7 @@
 
 Compare shader parameter layouts from a running UE 5.6 or UE 5.7.4 game and editor, then generate source copies for layouts that differ.
 
-UE 5.7.4 support, game capture from a minidump and the `uniform_layouts` program: [README-5.7.md](README-5.7.md).
+UE 5.7.4 notes, game capture from a minidump, saved captures and the `uniform_layouts` program: [docs/ue-5.7.md](docs/ue-5.7.md).
 
 The tool reads both processes without modifying them and checks the full uniform buffer registry. Generated files are written to a separate output directory. The original engine source is never changed.
 
@@ -106,7 +106,7 @@ Placeholder constant names do not affect shader binding. The tool can recover th
 
 ## Compatibility
 
-oatmealf is built for UE 5.6 and tested with Subnautica 2. Other UE 5.6 games may work but are untested. UE 5.7.4 uses the same memory layout and is supported ([README-5.7.md](README-5.7.md)). Other engine versions are not supported.
+oatmealf is built for UE 5.6 and tested with Subnautica 2. Other UE 5.6 games may work but are untested. UE 5.7.4 uses the same memory layout and is supported; it is tested with one shipping UE 5.7.4 game, captured from a minidump ([docs/ue-5.7.md](docs/ue-5.7.md)). Other engine versions are not supported.
 
 ## Build
 

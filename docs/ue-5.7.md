@@ -1,12 +1,12 @@
-# oatmealf: UE 5.7.4, minidump input, uniform_layouts
+# UE 5.7.4, minidump capture and uniform_layouts
 
-This fork of [1D-gh/oatmealf](https://github.com/1D-gh/oatmealf) supports Unreal Engine 5.7.4 and adds:
+oatmealf supports Unreal Engine 5.7.4 alongside 5.6, and has three features for working from saved data:
 
-- Game capture from a full-memory Windows minidump (`--game-minidump`), so the game does not have to run while the tool reads it.
-- Saved captures (`--save-game-layouts`, `--save-editor-layouts`) and `--capture-only`.
-- A second program, `uniform_layouts`, which writes the game layouts that differ from the editor's as a text file (format below). An engine that translates its own uniform buffers to the game's layouts at run time reads this file.
+- Game capture from a full-memory Windows minidump (`--game-minidump`), so the game does not have to keep running while the tool reads it.
+- Saved captures (`--save-game-layouts`, `--save-editor-layouts`) and `--capture-only`, which stops after saving them. A saved capture is read back with `--game-layouts` / `--editor-layouts`.
+- A second program, `uniform_layouts`, which writes the game layouts that differ from the editor's as a text file (format below), for tools that load the game's layouts into an engine at run time.
 
-The upstream usage in [README.md](README.md) applies unchanged.
+The usage in [README.md](../README.md) applies to 5.7.4 unchanged.
 
 ## UE 5.7.4 memory layout
 

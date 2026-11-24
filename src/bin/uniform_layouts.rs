@@ -1,5 +1,5 @@
-//! Writes the game uniform buffer layouts that differ from the editor's as a text file, for an engine that translates its
-//! uniform buffers to the game's layouts at run time. Format: README-5.7.md ("uniform_layouts output format").
+//! Writes the game uniform buffer layouts that differ from the editor's as a text file, for tools that load the game's
+//! layouts into an engine at run time. Format: docs/ue-5.7.md ("uniform_layouts output format").
 //!
 //! usage: uniform_layouts <game-layouts.json> <editor-layouts.json> <out.txt>
 
